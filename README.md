@@ -7,6 +7,7 @@ Inspired by Python's [MongoEngine](http://mongoengine.org/), built on top of the
 ## Features
 
 - **Attribute-macro models** — `#[db_collection("name")]` wires any struct up as a MongoDB-backed model.
+- **Raw ↔ decoded models** — `#[db_collection_from_raw("name", RawType)]` lets you keep a permissive on-disk shape (`Option`s, looser numeric types) and decode into a clean domain struct via `From<RawType>`.
 - **Async CRUD out of the box** — `create`, `find`, `find_one`, `update_one`, `delete_one`, `count`, `aggregate`, `save`, `delete`.
 - **Single global connection** — initialize once at startup with `connect(...)`, then call model methods from anywhere.
 
@@ -78,6 +79,54 @@ pub struct Lock {
     pub acquired_at: i64,
 }
 ```
+
+## Raw + decoded models
+
+Real-world Mongo collections often contain optional fields, looser numeric types, or legacy shapes you don't want leaking into the rest of your code. `#[db_collection_from_raw("name", RawType)]` lets you read into a permissive **raw** struct and expose a clean **decoded** struct to callers, with a single `From<RawType>` impl bridging the two.
+
+```rust
+use mangoengine::{db_collection_from_raw, DBCollectionRowTraitFromRaw};
+use mongodb::bson::{oid::ObjectId, DateTime};
+use serde::{Deserialize, Serialize};
+
+// On-disk shape — matches whatever the DB actually contains.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct RawChapter {
+    _id: ObjectId,
+    title: String,
+    thumbnail: Option<String>,
+    views: Option<u64>,
+    release_date: DateTime,
+}
+
+// Clean shape used by the rest of the app.
+#[db_collection_from_raw("chapters", RawChapter)]
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Chapter {
+    pub _id: ObjectId,
+    pub title: String,
+    pub thumbnail: String,
+    pub views: u64,
+    pub release_date: DateTime,
+}
+
+impl From<RawChapter> for Chapter {
+    fn from(raw: RawChapter) -> Self {
+        Chapter {
+            _id: raw._id,
+            title: raw.title,
+            thumbnail: raw.thumbnail.unwrap_or_default(),
+            views: raw.views.unwrap_or(0),
+            release_date: raw.release_date,
+        }
+    }
+}
+
+// Reads return `Chapter`; writes take `RawChapter`.
+let chapters: Vec<Chapter> = Chapter::find(doc! { "views": { "$gt": 0 } }, None).await;
+```
+
+The same CRUD surface as `DBCollectionRowTrait` is available on `DBCollectionRowTraitFromRaw`, with one difference: `find` / `find_one` return the decoded `ActualType`, while `create` accepts a `RawType`.
 
 ## API
 
