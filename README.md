@@ -1,6 +1,6 @@
 # mangoengine
 
-A lightweight, opinionated MongoDB ODM for Rust. Define a struct, annotate it with `#[db_collection("...")]`, and get async CRUD methods for free — no boilerplate, no per-call collection lookups.
+A lightweight, opinionated MongoDB ODM for Rust. Define a struct, annotate it with `#[db_collection("...")]`, and get async CRUD methods for free — no boilerplate.
 
 Inspired by Python's [MongoEngine](http://mongoengine.org/), built on top of the official [`mongodb`](https://crates.io/crates/mongodb) driver.
 
