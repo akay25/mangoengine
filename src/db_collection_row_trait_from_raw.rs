@@ -27,7 +27,7 @@ pub trait DBCollectionRowTraitFromRaw<
     // hot path.
     fn collection_cell() -> &'static OnceCell<Collection<Document>>;
 
-    async fn get_collection() -> Collection<T> {
+    async fn get_collection() -> Collection<RawType> {
         Self::collection_cell()
             .get_or_init(|| async { get_db().collection(Self::collection_name()) })
             .await
