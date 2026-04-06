@@ -1,5 +1,6 @@
 mod connect_options;
 mod db_collection_row_trait;
+mod db_collection_row_trait_from_raw;
 mod utils;
 
 // Publicly available APIs
