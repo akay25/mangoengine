@@ -1,0 +1,15 @@
+[package]
+name = "mangoengine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mangoengine_macros = { path = "mangoengine_macros" }
+mongodb = { version = "3.1.1", default-features = false, features = [
+    "rustls-tls",
+    "compat-3-0-0",
+] }
+tokio = { version = "1", features = ["sync"] }
+serde = "1"
+futures = "0.3"
+tracing = "0.1"
